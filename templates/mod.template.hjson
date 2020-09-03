@@ -1,0 +1,6 @@
+name: "${name}"
+displayName: "${name} mod"
+author: "${author}"
+description: "${name}"
+version: "${version}"
+minGameVersion: "103"

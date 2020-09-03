@@ -3,7 +3,7 @@
 	"name": "${processName} Crafter",
 	"description": "${processName} Crafter",
 	"outputLiquid": {"liquid": "${processId}-intermediate", "amount": "1"},
-	"size": 2,
+	"size": ${size},
 	"hasPower": true,
 	"hasLiquids": true,
 	"liquidCapacity": 10,
@@ -15,10 +15,6 @@
 		"power": 1.0,
 		"items": {
 			"items": ${consumes}
-		},
-		"liquid": {
-			"liquid": "water",
-			"amount": 1
 		}
 	},
 	"requirements": [

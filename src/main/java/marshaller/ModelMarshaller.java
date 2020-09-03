@@ -3,6 +3,7 @@ package marshaller;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,7 +51,7 @@ public class ModelMarshaller {
 		new File(outputDir+modelName+"/"+"sprites/zones").mkdirs();
 		new File(outputDir+modelName+"/"+"").mkdirs();
 		
-		String modTemplate = IOUtils.toString(new FileInputStream(new File("mod.template.hjson")),"UTF-8");
+		String modTemplate = IOUtils.toString(new FileInputStream(new File("templates/mod.template.hjson")),"UTF-8");
 		modTemplate = modTemplate.replaceAll("\\$\\{name\\}", modelName);
 		modTemplate = modTemplate.replaceAll("\\$\\{author\\}", author);
 		modTemplate = modTemplate.replaceAll("\\$\\{version\\}", version);		
@@ -69,8 +70,17 @@ public class ModelMarshaller {
 			
 			ChemicalProcess instance = process.newInstance();
 			List<Amount> consumes = instance.getConsumes();
+			for (Amount consume : consumes) {
+				System.out.println(instance.getClass().getSimpleName()+" CONSUMES " +consume.getElement().getClass().getSimpleName()); 
+			}
 			List<Amount> produces = instance.getProduces();
-			List<Amount> waste = instance.getProduces();
+			for (Amount produce : produces) {
+				System.out.println(instance.getClass().getSimpleName()+" PRODUCES " +produce.getElement().getClass().getSimpleName()); 
+			}
+			List<Amount> waste = instance.getWaste();
+			for (Amount wasteItem : waste) {
+				System.out.println(instance.getClass().getSimpleName()+" WASTES " +wasteItem.getElement().getClass().getSimpleName()); 
+			}
 			
 			Double energy = getEnergy(consumes);
 			
@@ -109,6 +119,10 @@ public class ModelMarshaller {
 					String elementName = normalize(element.getClass().getSimpleName(),"-").toLowerCase();
 					item.put("item", elementName);
 					item.put("amount", produce.getValue());
+					
+					System.out.println("BLOCK: "+processName+"-separator PRODUCES " + elementName+ " value: " + produce.getValue());
+					
+					
 					producesData.add(item);
 				}
 			}
@@ -117,22 +131,20 @@ public class ModelMarshaller {
 			String consumesStr = new ObjectMapper().writeValueAsString(consumesData);
 			
 			//generate a GenericCrafter
-			String crafterTemplate = IOUtils.toString(new FileInputStream(new File("GenericCrafter.template.json")),"UTF-8");
+			String crafterTemplate = IOUtils.toString(new FileInputStream(new File("templates/GenericCrafter.template.json")),"UTF-8");
 			crafterTemplate = crafterTemplate.replaceAll("\\$\\{processName\\}", processName);
 			crafterTemplate = crafterTemplate.replaceAll("\\$\\{processId\\}", processId);
 			crafterTemplate = crafterTemplate.replaceAll("\\$\\{consumes\\}", consumesStr);
+			crafterTemplate = crafterTemplate.replaceAll("\\$\\{size\\}", "3");
 			IOUtils.write(crafterTemplate, new FileOutputStream(new File(outputDir+modelName+"/"+"content/blocks/"+processId+"-crafter.json")),"UTF-8");
-			FileUtils.copyFile(new File("empty3.png"), new File(outputDir+modelName+"/"+"sprites/blocks/"+processId+"-crafter.png"));
 			
 			//generate the intermediate item
-			String itemTemplate = IOUtils.toString(new FileInputStream(new File("liquid.template.json")),"UTF-8");
+			String itemTemplate = IOUtils.toString(new FileInputStream(new File("templates/liquid.template.json")),"UTF-8");
 			itemTemplate = itemTemplate.replaceAll("\\$\\{name\\}", processName+" Intermediate");
 			IOUtils.write(itemTemplate, new FileOutputStream(new File(outputDir+modelName+"/"+"content/liquids/"+processId+"-intermediate.json")),"UTF-8");
-			FileUtils.copyFile(new File("item.png"), new File(outputDir+modelName+"/"+"sprites/items/"+processId+"-intermediate.png"));
-
 			
 			//generate a Separator
-			String separatorTemplate = IOUtils.toString(new FileInputStream(new File("Separator.template.json")),"UTF-8");
+			String separatorTemplate = IOUtils.toString(new FileInputStream(new File("templates/Separator.template.json")),"UTF-8");
 			separatorTemplate = separatorTemplate.replaceAll("\\$\\{processName\\}", processName);
 			separatorTemplate = separatorTemplate.replaceAll("\\$\\{processId\\}", processId);
 			separatorTemplate = separatorTemplate.replaceAll("\\$\\{powerComsumption\\}", ""+energy);
@@ -141,7 +153,8 @@ public class ModelMarshaller {
 			separatorTemplate = separatorTemplate.replaceAll("\\$\\{size\\}", "3");
 			separatorTemplate = separatorTemplate.replaceAll("\\$\\{produces\\}", producesStr);
 			IOUtils.write(separatorTemplate, new FileOutputStream(new File(outputDir+modelName+"/"+"content/blocks/"+processId+"-separator.json")),"UTF-8");
-			FileUtils.copyFile(new File("empty3.png"), new File(outputDir+modelName+"/"+"sprites/blocks/"+processId+"-separator.png"));
+
+			generateProcessImages(outputDir, modelName, processId);
 		}
 		
 		//for each item
@@ -150,12 +163,39 @@ public class ModelMarshaller {
 			String elementName = normalize(element.getClass().getSimpleName()," ");
 			String elementId = normalize(element.getClass().getSimpleName(),"-").toLowerCase();
 			System.out.println(" item: " + elementName);
-			String itemTemplate = IOUtils.toString(new FileInputStream(new File("item.template.hjson")),"UTF-8");
+			String itemTemplate = IOUtils.toString(new FileInputStream(new File("templates/item.template.hjson")),"UTF-8");
 			itemTemplate = itemTemplate.replaceAll("\\$\\{name\\}", elementName);
 			IOUtils.write(itemTemplate, new FileOutputStream(new File(outputDir+modelName+"/"+"content/items/"+elementId+".hjson")),"UTF-8");
-			FileUtils.copyFile(new File("item.png"), new File(outputDir+modelName+"/"+"sprites/items/"+elementId+".png"));
+			generateItemImage(outputDir, modelName, elementId);
 		}
+		
+		
+		
+	}
+	
+	private static void generateItemImage(String outputDir, String modelName, String elementId) throws IOException {
+		File custom = new File("templates/sprites/"+elementId+".png");
+		File inputFile = new File("templates/item.png");
+		if(custom.exists())
+			inputFile = custom;
 
+		FileUtils.copyFile(inputFile, new File(outputDir+modelName+"/"+"sprites/items/"+elementId+".png"));
+	}
+
+	public static void generateProcessImages(String outputDir, String modelName, String processId) throws IOException {
+		File custom = new File("templates/sprites/"+processId+"-crafter.png");
+		File inputFile = new File("templates/GenericCrafter.png");
+		if(custom.exists())
+			inputFile = custom;
+		FileUtils.copyFile(inputFile, new File(outputDir+modelName+"/"+"sprites/blocks/"+processId+"-crafter.png"));
+
+		custom = new File("templates/sprites/"+processId+"-separator.png");
+		inputFile = new File("templates/Separator.png");
+		if(custom.exists())
+			inputFile = custom;
+		FileUtils.copyFile(inputFile, new File(outputDir+modelName+"/"+"sprites/blocks/"+processId+"-separator.png"));
+
+		generateItemImage(outputDir, modelName, processId+"-intermediate");
 	}
 	
 	private static Double getEnergy(List<Amount> consumes) {
