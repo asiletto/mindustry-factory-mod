@@ -1,8 +1,0 @@
-{
-	"name": "${name}",
-	"description": "${name}",
-	"temperature": 1.0,
-	"viscosity": 0.8,
-	"effect": "burning",
-	"color": "444000"
-}

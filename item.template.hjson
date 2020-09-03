@@ -1,6 +1,0 @@
-type: material
-name: ${name}
-description: ${name}
-hardness: 2
-cost: 2
-color: ffffff
