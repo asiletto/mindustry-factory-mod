@@ -19,6 +19,7 @@ import org.reflections.Reflections;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import chemical.model.items.Energy;
+import chemical.model.items.Water;
 import mindustry.model.Amount;
 import mindustry.model.ChemicalElement;
 import mindustry.model.ChemicalProcess;
@@ -60,27 +61,45 @@ public class ModelMarshaller {
 		
 		Set<Class> items = new HashSet<Class>();
 		
+		//for each process
 		for (Class<? extends ChemicalProcess> process : processes) {
 			String processName = normalize(process.getSimpleName()," ");
 			String processId = normalize(process.getSimpleName(),"-").toLowerCase();
 			System.out.println(processName + " | " + processId);
-			String separatorTemplate = IOUtils.toString(new FileInputStream(new File("separator.template.json")),"UTF-8");
 			
 			ChemicalProcess instance = process.newInstance();
 			List<Amount> consumes = instance.getConsumes();
 			List<Amount> produces = instance.getProduces();
 			List<Amount> waste = instance.getProduces();
 			
+			Double energy = getEnergy(consumes);
+			
+			List<Map<String,Object>> consumesData = new ArrayList<Map<String,Object>>();
+			for (Amount consume : consumes) {
+				if(consume.getElement().getClass().equals(Energy.class)){
+					//dont add to output
+				} else if(consume.getElement().getClass().equals(Water.class)){
+					//dont add to output
+				}else {
+					items.add(consume.getElement().getClass());
+					
+					Map<String,Object> item = new HashMap<String,Object>();
+					ChemicalElement element = consume.getElement().getClass().newInstance();
+					String elementName = normalize(element.getClass().getSimpleName(),"-").toLowerCase();
+					item.put("item", elementName);
+					item.put("amount", consume.getValue());
+					consumesData.add(item);
+				}
+			}
 			
 			List<Amount> output = new ArrayList<Amount>();
 			output.addAll(produces);
 			output.addAll(waste);
-			
-			Double energy = getEnergy(consumes);
-			
-			List<Map<String,Object>> consumesData = new ArrayList<Map<String,Object>>();
+			List<Map<String,Object>> producesData = new ArrayList<Map<String,Object>>();
 			for (Amount produce : output) {
 				if(produce.getElement().getClass().equals(Energy.class)){
+					//dont add to output
+				} else if(produce.getElement().getClass().equals(Water.class)){
 					//dont add to output
 				}else {
 					items.add(produce.getElement().getClass());
@@ -90,21 +109,42 @@ public class ModelMarshaller {
 					String elementName = normalize(element.getClass().getSimpleName(),"-").toLowerCase();
 					item.put("item", elementName);
 					item.put("amount", produce.getValue());
-					consumesData.add(item);
+					producesData.add(item);
 				}
 			}
-			String producesStr = new ObjectMapper().writeValueAsString(consumesData);
 			
+			String producesStr = new ObjectMapper().writeValueAsString(producesData);
+			String consumesStr = new ObjectMapper().writeValueAsString(consumesData);
+			
+			//generate a GenericCrafter
+			String crafterTemplate = IOUtils.toString(new FileInputStream(new File("GenericCrafter.template.json")),"UTF-8");
+			crafterTemplate = crafterTemplate.replaceAll("\\$\\{processName\\}", processName);
+			crafterTemplate = crafterTemplate.replaceAll("\\$\\{processId\\}", processId);
+			crafterTemplate = crafterTemplate.replaceAll("\\$\\{consumes\\}", consumesStr);
+			IOUtils.write(crafterTemplate, new FileOutputStream(new File(outputDir+modelName+"/"+"content/blocks/"+processId+"-crafter.json")),"UTF-8");
+			FileUtils.copyFile(new File("empty3.png"), new File(outputDir+modelName+"/"+"sprites/blocks/"+processId+"-crafter.png"));
+			
+			//generate the intermediate item
+			String itemTemplate = IOUtils.toString(new FileInputStream(new File("liquid.template.json")),"UTF-8");
+			itemTemplate = itemTemplate.replaceAll("\\$\\{name\\}", processName+" Intermediate");
+			IOUtils.write(itemTemplate, new FileOutputStream(new File(outputDir+modelName+"/"+"content/liquids/"+processId+"-intermediate.json")),"UTF-8");
+			FileUtils.copyFile(new File("item.png"), new File(outputDir+modelName+"/"+"sprites/items/"+processId+"-intermediate.png"));
+
+			
+			//generate a Separator
+			String separatorTemplate = IOUtils.toString(new FileInputStream(new File("Separator.template.json")),"UTF-8");
 			separatorTemplate = separatorTemplate.replaceAll("\\$\\{processName\\}", processName);
+			separatorTemplate = separatorTemplate.replaceAll("\\$\\{processId\\}", processId);
 			separatorTemplate = separatorTemplate.replaceAll("\\$\\{powerComsumption\\}", ""+energy);
 			separatorTemplate = separatorTemplate.replaceAll("\\$\\{liquidConsumption\\}", "water");
 			separatorTemplate = separatorTemplate.replaceAll("\\$\\{liquidConsumptionValue\\}", "1");
 			separatorTemplate = separatorTemplate.replaceAll("\\$\\{size\\}", "3");
 			separatorTemplate = separatorTemplate.replaceAll("\\$\\{produces\\}", producesStr);
-			IOUtils.write(separatorTemplate, new FileOutputStream(new File(outputDir+modelName+"/"+"content/blocks/"+processId+".json")),"UTF-8");
-			FileUtils.copyFile(new File("empty3.png"), new File(outputDir+modelName+"/"+"sprites/blocks/"+processId+".png"));
+			IOUtils.write(separatorTemplate, new FileOutputStream(new File(outputDir+modelName+"/"+"content/blocks/"+processId+"-separator.json")),"UTF-8");
+			FileUtils.copyFile(new File("empty3.png"), new File(outputDir+modelName+"/"+"sprites/blocks/"+processId+"-separator.png"));
 		}
 		
+		//for each item
 		for (Class classItem : items) {
 			ChemicalElement element = (ChemicalElement)classItem.newInstance();
 			String elementName = normalize(element.getClass().getSimpleName()," ");

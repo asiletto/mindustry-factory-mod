@@ -1,8 +1,8 @@
 {
 	"type": "GenericCrafter",
-	"name": "NaCl brine mixer",
-	"description": "Produces NaCl brine from NaCl and water",
-	"outputLiquid": {"liquid": "nacl-brine", "amount": "1"},
+	"name": "${processName} Crafter",
+	"description": "${processName} Crafter",
+	"outputLiquid": {"liquid": "${processId}-intermediate", "amount": "1"},
 	"size": 2,
 	"hasPower": true,
 	"hasLiquids": true,
@@ -14,9 +14,7 @@
 	"consumes": {
 		"power": 1.0,
 		"items": {
-			"items": [
-				{"item": "na-cl", "amount": 1}
-			]
+			"items": ${consumes}
 		},
 		"liquid": {
 			"liquid": "water",
@@ -24,7 +22,7 @@
 		}
 	},
 	"requirements": [
-		{ "item": "copper", "amount": 50 },
+		{ "item": "copper", "amount": 1 },
 	],
 	"category": "crafting",
 	"idleSound": "respawning",

@@ -14,7 +14,7 @@
 	"consumes": {
 		"power": ${powerComsumption},
 		"liquid": {
-			"liquid": "${liquidConsumption}",
+			"liquid": "${processId}-intermediate",
 			"amount": ${liquidConsumptionValue}
 		}
 	},
