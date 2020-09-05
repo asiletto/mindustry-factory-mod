@@ -8,7 +8,7 @@
 	"hasLiquids": true,
 	"liquidCapacity": 10,
 	"hasItems": true,
-	"itemCapacity": 5,
+	"itemCapacity": 100,
 	"craftTime": 20,
 	"updateEffect": "oily",
 	"consumes": {

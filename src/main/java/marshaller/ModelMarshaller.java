@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -19,20 +21,27 @@ import org.reflections.Reflections;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import chemical.model.items.Energy;
-import chemical.model.items.Water;
-import mindustry.model.Amount;
-import mindustry.model.ChemicalElement;
-import mindustry.model.ChemicalProcess;
+import adapter.Amount;
+import adapter.ChemicalElement;
+import adapter.ChemicalProcess;
+import model.chemical.items.Energy;
+import model.chemical.items.Water;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.model.ZipParameters;
 
 public class ModelMarshaller {
 
 	public static void main(String[] args) throws Exception {
 		
-		String modelName="ChemicalPlant";
 		String author="Alessandro Siletto";
 		String version="1.0.0";
-		String outputDir="D:/Desktop 5/semanticfactory/";
+		
+		marshall("ChemicalPlant", author, version, "D:/Desktop 5/semanticfactory/", "model.chemical");
+		marshall("FossilFuel", author, version, "D:/Desktop 5/semanticfactory/", "model.fossil");
+
+	}
+	
+	public static void marshall(String modelName, String author, String version, String outputDir, String packageName) throws Exception {
 		
 		new File(outputDir+modelName+"/"+"bundles").mkdirs();
 		new File(outputDir+modelName+"/"+"content/blocks").mkdirs();
@@ -57,7 +66,7 @@ public class ModelMarshaller {
 		modTemplate = modTemplate.replaceAll("\\$\\{version\\}", version);		
 		IOUtils.write(modTemplate, new FileOutputStream(new File(outputDir+modelName+"/mod.hjson")),"UTF-8");
 		
-		Reflections reflections = new Reflections("chemical.model");
+		Reflections reflections = new Reflections(packageName);
 		Set<Class<? extends ChemicalProcess>> processes = reflections.getSubTypesOf(ChemicalProcess.class);
 		
 		Set<Class> items = new HashSet<Class>();
@@ -170,6 +179,24 @@ public class ModelMarshaller {
 		}
 		
 		
+		File generatedDirectory=new File(outputDir+modelName);
+		generatedDirectory.delete();
+		
+		
+		ZipParameters params = new ZipParameters();
+		
+		ZipFile zip = new ZipFile(modelName+".zip");
+		File[] files = generatedDirectory.listFiles();
+		
+		for (File file : files) {
+			if(file.isFile())
+				zip.addFile(file);
+			
+			if(file.isDirectory())
+				zip.addFolder(file);
+		}
+		
+		
 		
 	}
 	
@@ -218,5 +245,6 @@ public class ModelMarshaller {
         final Matcher matcher = pattern.matcher(string);
         final String result = matcher.replaceAll(subst);
         return result.substring(1);
-    }
+	}
+
 }
