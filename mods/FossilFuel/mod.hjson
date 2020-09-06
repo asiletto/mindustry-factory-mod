@@ -1,0 +1,6 @@
+name: "FossilFuel"
+displayName: "FossilFuel mod"
+author: "Alessandro Siletto"
+description: "FossilFuel"
+version: "1.0.0"
+minGameVersion: "103"

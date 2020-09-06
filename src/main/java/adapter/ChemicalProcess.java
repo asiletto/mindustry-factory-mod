@@ -12,7 +12,6 @@ public abstract class ChemicalProcess {
 	
 	public List<Amount> produces = new ArrayList<Amount>();
 	public List<Amount> consumes = new ArrayList<Amount>();
-	public List<Amount> waste = new ArrayList<Amount>();
 	
 	public abstract void init();
 	
@@ -27,14 +26,5 @@ public abstract class ChemicalProcess {
 	}
 	public void setConsumes(List<Amount> consumes) {
 		this.consumes = consumes;
-	}
-
-	public List<Amount> getWaste() {
-		return waste;
-	}
-
-	public void setWaste(List<Amount> waste) {
-		this.waste = waste;
-	}
-	
+	}	
 }

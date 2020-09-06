@@ -1,0 +1,27 @@
+{
+	"type": "Separator",
+	"name": "Oil Refinery Separator",
+	"description": "Oil Refinery Separator",
+	"results": [{"item":"diesel","amount":2.0},{"item":"kerosene","amount":2.0},{"item":"natural-gas","amount":3.0}],
+	"size": 3,
+	"hasPower": true,
+	"hasLiquids": true,
+	"hasItems": true,
+	"liquidCapacity": 50,
+	"itemCapacity": 50,
+	"craftTime": 5,
+	"updateEffect": "oily",
+	"consumes": {
+		"power": 0.0,
+		"liquid": {
+			"liquid": "oil-refinery-intermediate",
+			"amount": 1
+		}
+	},
+	"requirements": [
+		{ "item": "copper", "amount": 1 }
+	],
+	"category": "crafting",
+	"idleSound": "respawning",
+	"idleSoundVolume": 0.5
+}

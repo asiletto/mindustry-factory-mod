@@ -1,0 +1,6 @@
+type: material
+name: Kerosene
+description: Kerosene
+hardness: 2
+cost: 2
+color: ffffff

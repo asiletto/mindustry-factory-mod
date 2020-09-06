@@ -2,6 +2,7 @@ package marshaller;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,8 +13,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -35,14 +34,19 @@ public class ModelMarshaller {
 		
 		String author="Alessandro Siletto";
 		String version="1.0.0";
+		String outputDir="C:\\Users\\Alessandro\\eclipse-workspace\\mindustry-chemical-factory\\mods\\";
 		
-		marshall("ChemicalPlant", author, version, "D:/Desktop 5/semanticfactory/", "model.chemical");
-		marshall("FossilFuel", author, version, "D:/Desktop 5/semanticfactory/", "model.fossil");
+		new File(outputDir+"/"+"docs/process").mkdirs();
+		new File(outputDir+"/"+"docs/element").mkdirs();
+		IOUtils.write("", new FileOutputStream(new File(outputDir+"docs/index.md")),"UTF-8");
+		
+		marshall("ChemicalPlant", author, version, outputDir , "model.chemical");
+		marshall("FossilFuel", author, version, outputDir, "model.fossil");
 
 	}
 	
 	public static void marshall(String modelName, String author, String version, String outputDir, String packageName) throws Exception {
-		
+
 		new File(outputDir+modelName+"/"+"bundles").mkdirs();
 		new File(outputDir+modelName+"/"+"content/blocks").mkdirs();
 		new File(outputDir+modelName+"/"+"content/items").mkdirs();
@@ -71,27 +75,23 @@ public class ModelMarshaller {
 		
 		Set<Class> items = new HashSet<Class>();
 		
+		
+		updateIndexFile(processes, outputDir, modelName);
+
 		//for each process
 		for (Class<? extends ChemicalProcess> process : processes) {
+			
 			String processName = normalize(process.getSimpleName()," ");
 			String processId = normalize(process.getSimpleName(),"-").toLowerCase();
 			System.out.println(processName + " | " + processId);
 			
 			ChemicalProcess instance = process.newInstance();
+			writeProcessPage(instance, outputDir, modelName);
+
 			List<Amount> consumes = instance.getConsumes();
-			for (Amount consume : consumes) {
-				System.out.println(instance.getClass().getSimpleName()+" CONSUMES " +consume.getElement().getClass().getSimpleName()); 
-			}
 			List<Amount> produces = instance.getProduces();
-			for (Amount produce : produces) {
-				System.out.println(instance.getClass().getSimpleName()+" PRODUCES " +produce.getElement().getClass().getSimpleName()); 
-			}
-			List<Amount> waste = instance.getWaste();
-			for (Amount wasteItem : waste) {
-				System.out.println(instance.getClass().getSimpleName()+" WASTES " +wasteItem.getElement().getClass().getSimpleName()); 
-			}
 			
-			Double energy = getEnergy(consumes);
+			Double energy = getEnergy(consumes);			
 			
 			List<Map<String,Object>> consumesData = new ArrayList<Map<String,Object>>();
 			for (Amount consume : consumes) {
@@ -111,11 +111,8 @@ public class ModelMarshaller {
 				}
 			}
 			
-			List<Amount> output = new ArrayList<Amount>();
-			output.addAll(produces);
-			output.addAll(waste);
 			List<Map<String,Object>> producesData = new ArrayList<Map<String,Object>>();
-			for (Amount produce : output) {
+			for (Amount produce : produces) {
 				if(produce.getElement().getClass().equals(Energy.class)){
 					//dont add to output
 				} else if(produce.getElement().getClass().equals(Water.class)){
@@ -169,6 +166,7 @@ public class ModelMarshaller {
 		//for each item
 		for (Class classItem : items) {
 			ChemicalElement element = (ChemicalElement)classItem.newInstance();
+			writeElementPage(element, outputDir, modelName);
 			String elementName = normalize(element.getClass().getSimpleName()," ");
 			String elementId = normalize(element.getClass().getSimpleName(),"-").toLowerCase();
 			System.out.println(" item: " + elementName);
@@ -177,6 +175,7 @@ public class ModelMarshaller {
 			IOUtils.write(itemTemplate, new FileOutputStream(new File(outputDir+modelName+"/"+"content/items/"+elementId+".hjson")),"UTF-8");
 			generateItemImage(outputDir, modelName, elementId);
 		}
+		
 		
 		
 		File generatedDirectory=new File(outputDir+modelName);
@@ -200,6 +199,55 @@ public class ModelMarshaller {
 		
 	}
 	
+	private static void updateIndexFile(Set<Class<? extends ChemicalProcess>> processes, String outputDir, String modelName) throws FileNotFoundException, IOException {
+		String itemTemplate = IOUtils.toString(new FileInputStream(new File("templates/index.template.md")),"UTF-8");
+		
+		StringBuffer processesStr = new StringBuffer();
+		for (Class<? extends ChemicalProcess> process : processes) {			
+			String processName = normalize(process.getSimpleName()," ");
+			String processId = normalize(process.getSimpleName(),"-").toLowerCase();
+			processesStr.append("- ["+processName+"](process/"+processId+")\n");
+		}
+		itemTemplate = itemTemplate.replaceAll("\\$\\{modelName\\}", modelName);
+		itemTemplate = itemTemplate.replaceAll("\\$\\{processes\\}", processesStr.toString());
+
+		FileUtils.write(new File(outputDir+"/docs/index.md"), itemTemplate, true);
+	}
+
+	private static void writeProcessPage(ChemicalProcess process, String outputDir, String modelName) throws FileNotFoundException, IOException {
+		String itemTemplate = IOUtils.toString(new FileInputStream(new File("templates/process.template.md")),"UTF-8");
+		String processName = normalize(process.getClass().getSimpleName()," ");
+		String processId = normalize(process.getClass().getSimpleName(),"-").toLowerCase();
+		itemTemplate = itemTemplate.replaceAll("\\$\\{processName\\}", processName);
+		
+		//consume/produces
+		StringBuffer consumes = new StringBuffer();
+		for (Amount amount : process.getConsumes()) {
+			String name = normalize(amount.getElement().getClass().getSimpleName()," ");
+
+			consumes.append(" - "+name+" "+amount.getValue()+" "+amount.getUnit()+"\n");
+		}
+		itemTemplate = itemTemplate.replaceAll("\\$\\{consumes\\}", consumes.toString());
+
+		StringBuffer produces = new StringBuffer();
+		for (Amount amount : process.getProduces()) {
+			String name = normalize(amount.getElement().getClass().getSimpleName()," ");
+
+			produces.append(" - "+name+" "+amount.getValue()+" "+amount.getUnit()+"\n");
+		}
+		itemTemplate = itemTemplate.replaceAll("\\$\\{produces\\}", produces.toString());
+
+		IOUtils.write(itemTemplate, new FileOutputStream(new File(outputDir+"/docs/process/"+processId+".md")),"UTF-8");
+	}
+
+	private static void writeElementPage(ChemicalElement element, String outputDir, String modelName) throws FileNotFoundException, IOException {
+		String itemTemplate = IOUtils.toString(new FileInputStream(new File("templates/element.template.md")),"UTF-8");
+		String elementName = normalize(element.getClass().getSimpleName()," ");
+		String elementId = normalize(element.getClass().getSimpleName(),"-").toLowerCase();
+		itemTemplate = itemTemplate.replaceAll("\\$\\{elementName\\}", elementName);
+		IOUtils.write(itemTemplate, new FileOutputStream(new File(outputDir+"/docs/element/"+elementId+".md")),"UTF-8");
+	}
+
 	private static void generateItemImage(String outputDir, String modelName, String elementId) throws IOException {
 		File custom = new File("templates/sprites/"+elementId+".png");
 		File inputFile = new File("templates/item.png");

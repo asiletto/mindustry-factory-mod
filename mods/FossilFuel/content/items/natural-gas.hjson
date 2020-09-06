@@ -1,0 +1,6 @@
+type: material
+name: Natural Gas
+description: Natural Gas
+hardness: 2
+cost: 2
+color: ffffff

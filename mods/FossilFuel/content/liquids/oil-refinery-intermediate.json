@@ -1,0 +1,8 @@
+{
+	"name": "Oil Refinery Intermediate",
+	"description": "Oil Refinery Intermediate",
+	"temperature": 1.0,
+	"viscosity": 0.8,
+	"effect": "burning",
+	"color": "444000"
+}

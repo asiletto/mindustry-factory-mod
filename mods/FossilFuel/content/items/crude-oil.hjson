@@ -1,0 +1,6 @@
+type: material
+name: Crude Oil
+description: Crude Oil
+hardness: 2
+cost: 2
+color: ffffff

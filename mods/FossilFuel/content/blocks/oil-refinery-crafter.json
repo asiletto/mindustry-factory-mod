@@ -1,0 +1,26 @@
+{
+	"type": "GenericCrafter",
+	"name": "Oil Refinery Crafter",
+	"description": "Oil Refinery Crafter",
+	"outputLiquid": {"liquid": "oil-refinery-intermediate", "amount": "1"},
+	"size": 3,
+	"hasPower": true,
+	"hasLiquids": true,
+	"liquidCapacity": 10,
+	"hasItems": true,
+	"itemCapacity": 100,
+	"craftTime": 20,
+	"updateEffect": "oily",
+	"consumes": {
+		"power": 1.0,
+		"items": {
+			"items": [{"item":"crude-oil","amount":6.0}]
+		}
+	},
+	"requirements": [
+		{ "item": "copper", "amount": 1 },
+	],
+	"category": "crafting",
+	"idleSound": "respawning",
+	"idleSoundVolume": 0.5
+}

@@ -21,7 +21,8 @@ public class HallHeroultProcess extends ChemicalProcess {
 		consumes.add(new Amount(new AluminumBathMaterial(),	0.07, 	MeasureUnit.KG));
 		consumes.add(new Amount(new Alumina(),				1.93, 	MeasureUnit.KG));
 		
-		waste.add(new Amount(new Energy(), 		151.39, 	MeasureUnit.MegaJoule));
+		//waste
+		produces.add(new Amount(new Energy(), 		151.39, 	MeasureUnit.MegaJoule));
 		
 		produces.add(new Amount(new Energy(), 	30.00, MeasureUnit.MegaJoule));
 		produces.add(new Amount(new Aluminum(),	1.0, 	MeasureUnit.KG));
